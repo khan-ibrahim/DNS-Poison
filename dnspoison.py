@@ -34,7 +34,7 @@ def processPacket(pkt):
 
 #loads hostname ip pairs from hostname file into dict
 def loadHostnamesFile(hostnamesFile):
-    if not os.path.exists(parsed.f):
+    if not os.path.exists(hostnamesFile):
         print('ERROR: Specified hostname file not found')
         exit(1)
 
@@ -45,11 +45,11 @@ def loadHostnamesFile(hostnamesFile):
 
     with open(hostnamesFile, 'r') as input:
         for line in input:
-            m = re.find(pattern, line)
+            m = re.match(pattern, line)
 
-            #get these two from the line using regex
-            currentHostname = 'tmp'
-            currentIP = '192.168.1.1' #also tmp
+            currentHostname, currentIP = m.groups()
+
+            print('h:{}, ip:{}'.format(currentHostname, currentIP))
 
             #check if hostname already loaded, if not, add to dict.
             if currentHostname in hostnames:
