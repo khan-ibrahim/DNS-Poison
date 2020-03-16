@@ -13,17 +13,22 @@ def sniffLive(interfaceName, bpf):
 
 # Returns True if is targettable DNS request
 def isRelevant(pkt):
-    retval = False
+    retval = True
+
     #test if packet is DNS request
+    if(not pkt.haslayer(DNS) or not pkt[DNS].qr == 0):  #or not pkt.
+        return False
+
+    #test if packet hostname matches a specified hostname
     if not hostnames == None:
-        pass    #tmp
-        #test if packet hostname matches a specified hostname
+        retval = pkt[DNS].qd.qname in hostnames
     return retval
 
 def processPacket(pkt):
-    print(pkt.summary())
     if(isRelevant(pkt)):
-        pass #tmp
+        print(pkt[DNS].summary())
+        #pkt[DNS].show2()
+
         #identify redirect destination (current machine or other specified ip)
         #identify other fields necessary to forge packet
         #forge response packet
@@ -48,6 +53,8 @@ def loadHostnamesFile(hostnamesFile):
             m = re.match(pattern, line)
 
             currentHostname, currentIP = m.groups()
+
+            currentHostname = currentHostname.encode('utf-8')
 
             print('h:{}, ip:{}'.format(currentHostname, currentIP))
 
