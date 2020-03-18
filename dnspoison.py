@@ -55,11 +55,11 @@ def processPacket(pkt):
         #pkt[DNS].show2()
 
         #identify redirect destination (current machine or other specified ip)
-        fakeDst = ''
+        fakeDst = None
         if hostnames == None:
             fakeDst = defaultDst
         else:
-            fakeDest = hostnames[pkt[DNS].qd.qname]
+            fakeDst = hostnames[pkt[DNS].qd.qname]
 
         #forge response packet
         fResponse = forgeResponse(pkt, fakeDst)
