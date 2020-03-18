@@ -92,7 +92,7 @@ def loadHostnamesFile(hostnamesFile):
         for line in input:
             m = re.match(pattern, line)
 
-            currentHostname, currentIP = m.groups()
+            currentIP, currentHostname = m.groups()
 
             currentHostname = currentHostname.encode('utf-8')
             currentIP = currentIP.encode('utf-8')
@@ -120,7 +120,7 @@ def main():
     
     #implement an array of options
     parser.add_argument('-f', metavar='hostnames.txt', \
-      help='specify hostname ip pairs to hijack. 1 pair per line, separated by whitepace')
+      help='specify ip hostname pairs to hijack. 1 pair per hostname, separated by whitepace')
 
     parser.add_argument('-e', metavar='BPF', help='specify BPF expression')
     
